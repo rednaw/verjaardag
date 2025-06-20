@@ -10,8 +10,8 @@ If you're seeing this, you've probably already done this step. Congrats!
 # create a new project in the current directory
 npx sv create
 
-# create a new project in compleanno
-npx sv create compleanno
+# create a new project in verjaardag
+npx sv create verjaardag
 ```
 
 ## Developing

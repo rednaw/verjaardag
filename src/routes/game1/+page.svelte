@@ -1,16 +1,16 @@
 <script>
   import { base } from '$app/paths';
+  import { words } from '../words.js';
 
-  // Updated list of words to hide in the grid
-  const words = [
-    'OPA',
-    'LAGOS',
-    'PANAGA',
-    'ROLDE',
-    'PROBUS',
-    'BILJART'
-  ];
   const gridSize = 7;
+
+  // For display: replace one random letter in each word with an underscore
+  function maskWord(word) {
+    if (word.length < 2) return word;
+    const idx = Math.floor(Math.random() * word.length);
+    return word.substring(0, idx) + '_' + word.substring(idx + 1);
+  }
+  const maskedWords = words.map(maskWord);
 
   // Directions: [dx, dy]
   const directions = [
@@ -99,7 +99,7 @@
       {/each}
     </div>
     <div class="word-list">
-      {#each words as word}
+      {#each maskedWords as word}
         <span class="word">{word}</span>
       {/each}
     </div>
