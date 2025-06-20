@@ -15,17 +15,19 @@
 <style>
   main {
     text-align: center;
-    min-height: 105vh;
+    min-height: 100vh;
     display: flex;
     background: var(--color-background);
   }
 
   .content {
     width: 100%;
-    padding: 8rem 2rem 2rem 2rem;
+    padding: 2.5rem 1rem 1.5rem 1rem;
     display: flex;
     flex-direction: column;
-    margin-top: auto;
+    justify-content: center;
+    flex: 1;
+    margin-top: 0;
   }
 
   .games-column {
@@ -33,7 +35,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
+    gap: 1.2rem;
     max-width: 400px;
     width: 100%;
     margin: 0 auto;
@@ -42,8 +44,8 @@
   .game-button {
     color: var(--color-text);
     text-decoration: none;
-    font-size: 2rem;
-    padding: 2rem;
+    font-size: 1.5rem;
+    padding: 1.2rem;
     background: var(--color-white);
     border: 2px solid var(--color-border);
     border-radius: 0.5rem;
@@ -54,8 +56,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
-    min-height: 120px;
+    min-width: 70px;
+    min-height: 70px;
+    max-width: 120px;
+    max-height: 120px;
   }
 
   .game-button:hover {
@@ -70,24 +74,30 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
-  @media (max-width: 500px) {
-    .content {
-      padding: 6rem 1rem 2rem 1rem;
-    }
-    .games-column {
-      gap: 1rem;
-    }
-    .game-button {
-      padding: 1.5rem;
-      font-size: 1.75rem;
-      min-width: 80px;
-      min-height: 80px;
-    }
+  .arrow {
+    font-size: 2.5rem;
+    color: var(--color-text);
+    margin: 0.5rem 0;
   }
 
-  .arrow {
-    font-size: 4rem;
-    color: var(--color-text);
-    margin: 1rem 0;
+  @media (max-width: 500px) {
+    .content {
+      padding: 1.2rem 0.5rem 1rem 0.5rem;
+    }
+    .games-column {
+      gap: 0.7rem;
+    }
+    .game-button {
+      padding: 0.7rem;
+      font-size: 1.1rem;
+      min-width: 48px;
+      min-height: 48px;
+      max-width: 80px;
+      max-height: 80px;
+    }
+    .arrow {
+      font-size: 1.7rem;
+      margin: 0.3rem 0;
+    }
   }
 </style> 
