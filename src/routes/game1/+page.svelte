@@ -128,6 +128,7 @@
 
   // Found words and highlight logic
   let foundWords = [];
+  $: foundWordsSet = new Set(foundWords.map(w => w.toUpperCase()));
   let foundCells = [];
   let shake = false;
 
@@ -161,7 +162,7 @@
     return foundCells.some(([py, px]) => py === y && px === x);
   }
   function isWordFound(word) {
-    return foundWords.includes(word);
+    return foundWords.some(w => w.toUpperCase() === word.toUpperCase());
   }
 </script>
 
@@ -179,7 +180,6 @@
                   class="cell {isSelected(y, x) ? 'selected' : ''} {isCellFound(y, x) ? 'found' : ''}"
                   aria-label={`Letter ${letter} at row ${y + 1}, column ${x + 1}`}
                   on:click={() => toggleCell(y, x)}
-                  disabled={isCellFound(y, x)}
                 >
                   {letter}
                 </button>
@@ -190,7 +190,7 @@
       {/key}
       <div class="word-list">
         {#each words as word, i}
-          <span class="word {isWordFound(word) ? 'found' : ''}">{isWordFound(word) ? word : maskedWords[i]}</span>
+          <span class="word {foundWordsSet.has(word.toUpperCase()) ? 'found' : ''}">{foundWordsSet.has(word.toUpperCase()) ? word : maskedWords[i]}</span>
         {/each}
       </div>
       <button class="check-btn" on:click={checkSelection} disabled={selected.length === 0}>Controleer</button>
@@ -332,6 +332,7 @@
     color: #1b5e20;
     text-decoration: line-through;
     font-weight: bold;
+    border: 2px solid #388e3c;
   }
   @media (max-width: 500px) {
     .grid {
