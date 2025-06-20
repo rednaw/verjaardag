@@ -1,6 +1,17 @@
 <script>
   import { words } from './words.js';
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
+
+  function joinBase(path) {
+    // Ensures no double slashes and always works for both dev and prod
+    if (!base || base === '/') return path.startsWith('/') ? path : '/' + path;
+    return base.endsWith('/')
+      ? (path.startsWith('/') ? base + path.slice(1) : base + path)
+      : (path.startsWith('/') ? base + path : base + '/' + path);
+  }
+  // For debugging
+  console.log('SvelteKit base path:', base);
 
   const gridSize = 7;
 
@@ -192,7 +203,7 @@
         setTimeout(() => {
           transitionOut = true;
           setTimeout(() => {
-            window.location.href = '/game2';
+            window.location.href = joinBase('/game2');
           }, 2000);
         }, 500);
       }
