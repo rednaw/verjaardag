@@ -124,6 +124,7 @@
   $: foundWordsSet = new Set(foundWords.map(w => w.toUpperCase()));
   let foundCells = [];
   let shake = false;
+  let transitionOut = false;
 
   function checkSelection() {
     if (selected.length < 2) {
@@ -140,6 +141,12 @@
       foundCells = [...foundCells, ...selected];
       if (foundWords.length === words.length) {
         localStorage.setItem('game1Complete', 'true');
+        setTimeout(() => {
+          transitionOut = true;
+          setTimeout(() => {
+            window.location.href = '/game2';
+          }, 2000);
+        }, 500);
       }
     } else {
       shake = true;
@@ -156,7 +163,7 @@
   }
 </script>
 
-<div class="page-wrapper">
+<div class="page-wrapper {transitionOut ? 'dramatic-out' : ''}">
   <main>
     {#if grid.length}
       {#key foundCells.length}
@@ -184,8 +191,7 @@
       </div>
       <button class="check-btn" on:click={checkSelection} disabled={selected.length === 0}>Controleer</button>
       {#if foundWords.length === words.length}
-        <div class="congrats">🎉 Goed gedaan! Je hebt alle woorden gevonden.</div>
-        <button class="next-btn" on:click={() => window.location.href = '/game2'}>Volgende spel</button>
+        <!-- No congratulatory message or button, just the animation and auto-transition -->
       {/if}
     {/if}
   </main>
@@ -320,22 +326,26 @@
     font-weight: bold;
     text-align: center;
   }
-  .next-btn {
-    margin: 1.2rem auto 0 auto;
-    padding: 0.7rem 2.2rem;
-    font-size: 1.2rem;
-    border-radius: 0.5rem;
-    border: none;
-    background: #1976d2;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: background 0.2s;
-    display: block;
+  .dramatic-out {
+    animation: dramatic-fade-scale 2s forwards;
   }
-  .next-btn:hover {
-    background: #0e61cb;
+  @keyframes dramatic-fade-scale {
+    0% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1.1) rotate(-2deg);
+    }
+    70% {
+      opacity: 0.7;
+      transform: scale(1.2) rotate(2deg);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2) rotate(-8deg);
+    }
   }
   @media (max-width: 500px) {
     .grid {
