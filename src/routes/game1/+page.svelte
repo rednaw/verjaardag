@@ -238,6 +238,9 @@
     box-shadow: 0 4px 32px rgba(0,0,0,0.1);
     margin-bottom: 1.5rem;
     margin-top: 4.2rem;
+    max-width: 100vw;
+    max-height: 80vw;
+    box-sizing: border-box;
   }
   .row {
     display: flex;
@@ -329,5 +332,21 @@
     color: #1b5e20;
     text-decoration: line-through;
     font-weight: bold;
+  }
+  @media (max-width: 500px) {
+    .grid {
+      max-width: 98vw;
+      max-height: 98vw;
+      padding: 0.5rem;
+      gap: 0.2rem;
+    }
+    .cell {
+      width: 11vw;
+      height: 11vw;
+      font-size: 1.2rem;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+    }
   }
 </style> 
