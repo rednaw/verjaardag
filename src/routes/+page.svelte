@@ -238,9 +238,6 @@
         {/each}
       </div>
       <button class="check-btn" on:click={checkSelection} disabled={selected.length === 0}>Controleer</button>
-      {#if foundWords.length === words.length}
-        <!-- No congratulatory message or button, just the animation and auto-transition -->
-      {/if}
     {/if}
   </main>
 </div>
@@ -367,13 +364,7 @@
     font-weight: bold;
     border: 2px solid #388e3c;
   }
-  .congrats {
-    margin-top: 2rem;
-    font-size: 1.3rem;
-    color: var(--color-exact);
-    font-weight: bold;
-    text-align: center;
-  }
+
   .dramatic-out {
     animation: dramatic-fade-scale 2s forwards;
   }

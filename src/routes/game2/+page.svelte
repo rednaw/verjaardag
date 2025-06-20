@@ -1,5 +1,4 @@
 <script>
-  import { base } from '$app/paths';
   import { words } from '../words.js';
 </script>
 
