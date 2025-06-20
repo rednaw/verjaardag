@@ -1,5 +1,23 @@
 <script>
   import { base } from '$app/paths';
+  import { onMount } from 'svelte';
+
+  let game1Complete = false;
+  let shakeGame2 = false;
+
+  onMount(() => {
+    game1Complete = localStorage.getItem('game1Complete') === 'true';
+  });
+
+  function handleGame2Click(event) {
+    if (!game1Complete) {
+      event.preventDefault();
+      shakeGame2 = true;
+      setTimeout(() => {
+        shakeGame2 = false;
+      }, 400);
+    }
+  }
 </script>
 
 <main>
@@ -7,7 +25,13 @@
     <div class="games-column">
       <a href="{base}/game1" class="game-button">1</a>
       <div class="arrow">↓</div>
-      <a href="{base}/game2" class="game-button">2</a>
+      <a
+        href="{base}/game2"
+        class="game-button {shakeGame2 ? 'shake' : ''} {game1Complete ? '' : 'disabled'}"
+        on:click={handleGame2Click}
+        tabindex="0"
+        aria-disabled={!game1Complete}
+      >2</a>
     </div>
   </div>
 </main>
@@ -78,6 +102,23 @@
     font-size: 2.5rem;
     color: var(--color-text);
     margin: 0.5rem 0;
+  }
+
+  .game-button.disabled {
+    pointer-events: auto;
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .game-button.shake {
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+    100% { transform: translateX(0); }
   }
 
   @media (max-width: 500px) {

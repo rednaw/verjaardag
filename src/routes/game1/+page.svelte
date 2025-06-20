@@ -46,33 +46,56 @@
     return true;
   }
 
-  // Helper to place a word in the grid
-  function placeWord(grid, word) {
-    const tries = 100;
-    for (let t = 0; t < tries; t++) {
-      const dir = directions[Math.floor(Math.random() * directions.length)];
-      const dx = dir[0];
-      const dy = dir[1];
-      const maxX = dx === 0 ? gridSize - 1 : dx > 0 ? gridSize - word.length : word.length - 1;
-      const maxY = dy === 0 ? gridSize - 1 : dy > 0 ? gridSize - word.length : word.length - 1;
-      const x = Math.floor(Math.random() * (maxX + 1));
-      const y = Math.floor(Math.random() * (maxY + 1));
-      if (canPlace(grid, word, x, y, dx, dy)) {
-        for (let i = 0; i < word.length; i++) {
-          grid[y + dy * i][x + dx * i] = word[i];
+  function placeWord(grid, word, x, y, dx, dy) {
+    for (let i = 0; i < word.length; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      grid[ny][nx] = word[i];
+    }
+  }
+
+  function removeWord(grid, word, x, y, dx, dy) {
+    for (let i = 0; i < word.length; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      grid[ny][nx] = '';
+    }
+  }
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function backtrack(grid, wordList, wordIdx = 0) {
+    if (wordIdx === wordList.length) return true;
+    const word = wordList[wordIdx];
+    const positions = [];
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        for (const [dx, dy] of directions) {
+          positions.push([x, y, dx, dy]);
         }
-        return true;
+      }
+    }
+    shuffle(positions);
+    for (const [x, y, dx, dy] of positions) {
+      if (canPlace(grid, word, x, y, dx, dy)) {
+        placeWord(grid, word, x, y, dx, dy);
+        if (backtrack(grid, wordList, wordIdx + 1)) return true;
+        removeWord(grid, word, x, y, dx, dy);
       }
     }
     return false;
   }
 
-  // Generate the grid with all words
   function generateGrid() {
     let grid = createEmptyGrid(gridSize);
-    for (const word of words) {
-      placeWord(grid, word);
-    }
+    // Try to place all words with backtracking
+    backtrack(grid, words);
     // Fill empty cells with random letters
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
@@ -121,6 +144,9 @@
     if (matchIdx !== -1) {
       foundWords = [...foundWords, words[matchIdx]];
       foundCells = [...foundCells, ...selected];
+      if (foundWords.length === words.length) {
+        localStorage.setItem('game1Complete', 'true');
+      }
     } else {
       shake = true;
       setTimeout(() => {
