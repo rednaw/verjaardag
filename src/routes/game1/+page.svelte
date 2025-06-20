@@ -1,6 +1,7 @@
 <script>
   import { base } from '$app/paths';
   import { words } from '../words.js';
+  import { onMount } from 'svelte';
 
   const gridSize = 7;
 
@@ -83,26 +84,91 @@
     return grid;
   }
 
-  const grid = generateGrid();
+  let grid = [];
+  onMount(() => {
+    grid = generateGrid();
+  });
+
+  // Tap-to-select logic
+  let selected = [];
+  function toggleCell(y, x) {
+    const idx = selected.findIndex(([sy, sx]) => sy === y && sx === x);
+    if (idx === -1) {
+      selected = [...selected, [y, x]];
+    } else {
+      selected = selected.filter(([sy, sx]) => !(sy === y && sx === x));
+    }
+  }
+  function isSelected(y, x) {
+    return selected.some(([sy, sx]) => sy === y && sx === x);
+  }
+
+  // Found words and highlight logic
+  let foundWords = [];
+  let foundCells = [];
+  let shake = false;
+
+  function checkSelection() {
+    if (selected.length < 2) {
+      selected = [];
+      return;
+    }
+    const letters = selected.map(([y, x]) => grid[y][x]).join('');
+    const reversed = letters.split('').reverse().join('');
+    const matchIdx = words.findIndex(
+      w => !foundWords.includes(w) && (w === letters || w === reversed)
+    );
+    if (matchIdx !== -1) {
+      foundWords = [...foundWords, words[matchIdx]];
+      foundCells = [...foundCells, ...selected];
+    } else {
+      shake = true;
+      setTimeout(() => {
+        shake = false;
+        selected = [];
+      }, 400);
+      return;
+    }
+    selected = [];
+  }
+  function isCellFound(y, x) {
+    return foundCells.some(([py, px]) => py === y && px === x);
+  }
+  function isWordFound(word) {
+    return foundWords.includes(word);
+  }
 </script>
 
 <div class="page-wrapper">
   <a href="{base}/" class="back-arrow">←</a>
   <main>
-    <div class="grid">
-      {#each grid as row}
-        <div class="row">
-          {#each row as letter}
-            <div class="cell">{letter}</div>
+    {#if grid.length}
+      {#key foundCells.length}
+        <div class="grid {shake ? 'shake' : ''}">
+          {#each grid as row, y}
+            <div class="row">
+              {#each row as letter, x}
+                <button
+                  type="button"
+                  class="cell {isSelected(y, x) ? 'selected' : ''} {isCellFound(y, x) ? 'found' : ''}"
+                  aria-label={`Letter ${letter} at row ${y + 1}, column ${x + 1}`}
+                  on:click={() => toggleCell(y, x)}
+                  disabled={isCellFound(y, x)}
+                >
+                  {letter}
+                </button>
+              {/each}
+            </div>
           {/each}
         </div>
-      {/each}
-    </div>
-    <div class="word-list">
-      {#each maskedWords as word}
-        <span class="word">{word}</span>
-      {/each}
-    </div>
+      {/key}
+      <div class="word-list">
+        {#each words as word, i}
+          <span class="word {isWordFound(word) ? 'found' : ''}">{isWordFound(word) ? word : maskedWords[i]}</span>
+        {/each}
+      </div>
+      <button class="check-btn" on:click={checkSelection} disabled={selected.length === 0}>Controleer</button>
+    {/if}
   </main>
 </div>
 
@@ -163,6 +229,52 @@
     border: 2px solid var(--color-border);
     border-radius: 0.5rem;
     user-select: none;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    outline: none;
+  }
+  .cell.selected {
+    background: #ffe082;
+    border-color: #ffb300;
+  }
+  .cell.found {
+    background: #a5d6a7;
+    border-color: #388e3c;
+    color: #1b5e20;
+  }
+  .cell:focus {
+    box-shadow: 0 0 0 2px #1976d2;
+    border-color: #1976d2;
+  }
+  .check-btn {
+    margin: 2.2rem 0 0.7rem 0;
+    padding: 0.7rem 2.2rem;
+    font-size: 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: #1976d2;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s;
+    align-self: center;
+    display: block;
+  }
+  .check-btn:disabled {
+    background: #b0bec5;
+    cursor: not-allowed;
+  }
+  .grid.shake {
+    animation: shake 0.4s;
+  }
+  @keyframes shake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+    100% { transform: translateX(0); }
   }
   .word-list {
     display: flex;
@@ -184,5 +296,12 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     margin-bottom: 0.2rem;
     white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+  }
+  .word.found {
+    background: #a5d6a7;
+    color: #1b5e20;
+    text-decoration: line-through;
+    font-weight: bold;
   }
 </style> 
