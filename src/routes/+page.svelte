@@ -87,10 +87,58 @@
     return false;
   }
 
+  function verifyGrid(grid, words) {
+    // Helper to check if a word exists in the grid in any direction
+    function wordInGrid(word) {
+      const len = word.length;
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          for (const [dx, dy] of directions) {
+            let found = true;
+            for (let i = 0; i < len; i++) {
+              const nx = x + dx * i;
+              const ny = y + dy * i;
+              if (
+                nx < 0 || nx >= gridSize ||
+                ny < 0 || ny >= gridSize ||
+                grid[ny][nx] !== word[i]
+              ) {
+                found = false;
+                break;
+              }
+            }
+            if (found) return true;
+            // Check reversed
+            found = true;
+            for (let i = 0; i < len; i++) {
+              const nx = x + dx * i;
+              const ny = y + dy * i;
+              if (
+                nx < 0 || nx >= gridSize ||
+                ny < 0 || ny >= gridSize ||
+                grid[ny][nx] !== word[len - 1 - i]
+              ) {
+                found = false;
+                break;
+              }
+            }
+            if (found) return true;
+          }
+        }
+      }
+      return false;
+    }
+    return words.every(word => wordInGrid(word));
+  }
+
   function generateGrid() {
-    let grid = createEmptyGrid(gridSize);
-    // Try to place all words with backtracking
-    backtrack(grid, words);
+    let grid;
+    let tries = 0;
+    do {
+      grid = createEmptyGrid(gridSize);
+      backtrack(grid, words);
+      tries++;
+    } while (!verifyGrid(grid, words) && tries < 100);
     // Fill empty cells with random letters
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
