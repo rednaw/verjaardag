@@ -4,7 +4,6 @@
 </script>
 
 <div class="page-wrapper">
-  <a href="{base}/" class="back-arrow">←</a>
   <main>
     <div class="word-list">
       {#each words as word}
@@ -21,20 +20,6 @@
     background: var(--color-background);
     position: relative;
     overflow-x: hidden;
-  }
-  .back-arrow {
-    position: absolute;
-    top: 1.2rem;
-    left: 1.2rem;
-    font-size: 2.5rem;
-    color: #e53935;
-    text-decoration: none;
-    font-weight: bold;
-    z-index: 100;
-    transition: color 0.2s;
-  }
-  .back-arrow:hover {
-    color: #b71c1c;
   }
   main {
     display: flex;

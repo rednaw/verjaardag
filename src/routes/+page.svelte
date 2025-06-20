@@ -1,115 +1,279 @@
 <script>
-  import { base } from '$app/paths';
+  import { words } from './words.js';
   import { onMount } from 'svelte';
 
-  let game1Complete = false;
-  let shakeGame2 = false;
+  const gridSize = 7;
 
+  function maskWord(word) {
+    if (word.length < 2) return word;
+    const idx = Math.floor(Math.random() * word.length);
+    return word.substring(0, idx) + '_' + word.substring(idx + 1);
+  }
+  const maskedWords = words.map(maskWord);
+
+  const directions = [
+    [1, 0],   // right
+    [0, 1],   // down
+    [1, 1],   // diagonal down-right
+    [-1, 1],  // diagonal down-left
+    [-1, 0],  // left
+    [0, -1],  // up
+    [1, -1],  // diagonal up-right
+    [-1, -1], // diagonal up-left
+  ];
+
+  function createEmptyGrid(size) {
+    return Array.from({ length: size }, () => Array(size).fill(''));
+  }
+
+  function canPlace(grid, word, x, y, dx, dy) {
+    for (let i = 0; i < word.length; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      if (
+        nx < 0 || nx >= gridSize ||
+        ny < 0 || ny >= gridSize ||
+        (grid[ny][nx] && grid[ny][nx] !== word[i])
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function placeWord(grid, word, x, y, dx, dy) {
+    for (let i = 0; i < word.length; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      grid[ny][nx] = word[i];
+    }
+  }
+
+  function removeWord(grid, word, x, y, dx, dy) {
+    for (let i = 0; i < word.length; i++) {
+      const nx = x + dx * i;
+      const ny = y + dy * i;
+      grid[ny][nx] = '';
+    }
+  }
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function backtrack(grid, wordList, wordIdx = 0) {
+    if (wordIdx === wordList.length) return true;
+    const word = wordList[wordIdx];
+    const positions = [];
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        for (const [dx, dy] of directions) {
+          positions.push([x, y, dx, dy]);
+        }
+      }
+    }
+    shuffle(positions);
+    for (const [x, y, dx, dy] of positions) {
+      if (canPlace(grid, word, x, y, dx, dy)) {
+        placeWord(grid, word, x, y, dx, dy);
+        if (backtrack(grid, wordList, wordIdx + 1)) return true;
+        removeWord(grid, word, x, y, dx, dy);
+      }
+    }
+    return false;
+  }
+
+  function generateGrid() {
+    let grid = createEmptyGrid(gridSize);
+    // Try to place all words with backtracking
+    backtrack(grid, words);
+    // Fill empty cells with random letters
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (!grid[y][x]) {
+          grid[y][x] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+      }
+    }
+    return grid;
+  }
+
+  let grid = [];
   onMount(() => {
-    game1Complete = localStorage.getItem('game1Complete') === 'true';
+    grid = generateGrid();
   });
 
-  function handleGame2Click(event) {
-    if (!game1Complete) {
-      event.preventDefault();
-      shakeGame2 = true;
-      setTimeout(() => {
-        shakeGame2 = false;
-      }, 400);
+  let selected = [];
+  function toggleCell(y, x) {
+    const idx = selected.findIndex(([sy, sx]) => sy === y && sx === x);
+    if (idx === -1) {
+      selected = [...selected, [y, x]];
+    } else {
+      selected = selected.filter(([sy, sx]) => !(sy === y && sx === x));
     }
+  }
+  function isSelected(y, x) {
+    return selected.some(([sy, sx]) => sy === y && sx === x);
+  }
+
+  let foundWords = [];
+  $: foundWordsSet = new Set(foundWords.map(w => w.toUpperCase()));
+  let foundCells = [];
+  let shake = false;
+
+  function checkSelection() {
+    if (selected.length < 2) {
+      selected = [];
+      return;
+    }
+    const letters = selected.map(([y, x]) => grid[y][x]).join('');
+    const reversed = letters.split('').reverse().join('');
+    const matchIdx = words.findIndex(
+      w => !foundWords.includes(w) && (w === letters || w === reversed)
+    );
+    if (matchIdx !== -1) {
+      foundWords = [...foundWords, words[matchIdx]];
+      foundCells = [...foundCells, ...selected];
+      if (foundWords.length === words.length) {
+        localStorage.setItem('game1Complete', 'true');
+      }
+    } else {
+      shake = true;
+      setTimeout(() => {
+        shake = false;
+        selected = [];
+      }, 400);
+      return;
+    }
+    selected = [];
+  }
+  function isCellFound(y, x) {
+    return foundCells.some(([py, px]) => py === y && px === x);
   }
 </script>
 
-<main>
-  <div class="content">
-    <div class="games-column">
-      <a href="{base}/game1" class="game-button">1</a>
-      <div class="arrow">↓</div>
-      <a
-        href="{base}/game2"
-        class="game-button {shakeGame2 ? 'shake' : ''} {game1Complete ? '' : 'disabled'}"
-        on:click={handleGame2Click}
-        tabindex="0"
-        aria-disabled={!game1Complete}
-      >2</a>
-    </div>
-  </div>
-</main>
+<div class="page-wrapper">
+  <main>
+    {#if grid.length}
+      {#key foundCells.length}
+        <div class="grid {shake ? 'shake' : ''}">
+          {#each grid as row, y}
+            <div class="row">
+              {#each row as letter, x}
+                <button
+                  type="button"
+                  class="cell {isSelected(y, x) ? 'selected' : ''} {isCellFound(y, x) ? 'found' : ''}"
+                  aria-label={`Letter ${letter} at row ${y + 1}, column ${x + 1}`}
+                  on:click={() => toggleCell(y, x)}
+                >
+                  {letter}
+                </button>
+              {/each}
+            </div>
+          {/each}
+        </div>
+      {/key}
+      <div class="word-list">
+        {#each words as word, i}
+          <span class="word {foundWordsSet.has(word.toUpperCase()) ? 'found' : ''}">{foundWordsSet.has(word.toUpperCase()) ? word : maskedWords[i]}</span>
+        {/each}
+      </div>
+      <button class="check-btn" on:click={checkSelection} disabled={selected.length === 0}>Controleer</button>
+      {#if foundWords.length === words.length}
+        <div class="congrats">🎉 Goed gedaan! Je hebt alle woorden gevonden.</div>
+        <button class="next-btn" on:click={() => window.location.href = '/game2'}>Volgende spel</button>
+      {/if}
+    {/if}
+  </main>
+</div>
 
 <style>
-  main {
-    text-align: center;
+  .page-wrapper {
+    width: 100vw;
     min-height: 100vh;
-    display: flex;
     background: var(--color-background);
+    position: relative;
+    overflow-x: hidden;
   }
-
-  .content {
-    width: 100%;
-    padding: 2.5rem 1rem 1.5rem 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-    margin-top: 0;
-  }
-
-  .games-column {
+  main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1.2rem;
-    max-width: 400px;
-    width: 100%;
-    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--color-background);
+    padding-top: 0.5rem;
   }
-
-  .game-button {
-    color: var(--color-text);
-    text-decoration: none;
-    font-size: 1.5rem;
-    padding: 1.2rem;
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     background: var(--color-white);
+    padding: 1.2rem 1.2rem 1.2rem 1.2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    margin-top: 4.2rem;
+    max-width: 100vw;
+    max-height: 80vw;
+    box-sizing: border-box;
+  }
+  .row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .cell {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    background: var(--color-background);
     border: 2px solid var(--color-border);
     border-radius: 0.5rem;
-    transition: all 0.2s ease;
-    font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 70px;
-    min-height: 70px;
-    max-width: 120px;
-    max-height: 120px;
+    user-select: none;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    outline: none;
   }
-
-  .game-button:hover {
-    background: var(--color-hover-bg);
-    border-color: var(--color-hover-border);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  .cell.selected {
+    background: #ffe082;
+    border-color: #ffb300;
   }
-
-  .game-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  .cell.found {
+    background: #a5d6a7;
+    border-color: #388e3c;
+    color: #1b5e20;
   }
-
-  .arrow {
-    font-size: 2.5rem;
-    color: var(--color-text);
-    margin: 0.5rem 0;
+  .cell:focus {
+    box-shadow: 0 0 0 2px #1976d2;
+    border-color: #1976d2;
   }
-
-  .game-button.disabled {
-    pointer-events: auto;
-    opacity: 0.5;
+  .check-btn {
+    margin: 2.2rem 0 0.7rem 0;
+    padding: 0.7rem 2.2rem;
+    font-size: 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: #1976d2;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s;
+    align-self: center;
+    display: block;
+  }
+  .check-btn:disabled {
+    background: #b0bec5;
     cursor: not-allowed;
   }
-  .game-button.shake {
+  .grid.shake {
     animation: shake 0.4s;
   }
   @keyframes shake {
@@ -120,25 +284,73 @@
     80% { transform: translateX(8px); }
     100% { transform: translateX(0); }
   }
-
+  .word-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+  }
+  .word {
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    color: var(--color-text);
+    background: var(--color-white);
+    padding: 0.3rem 0.8rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+  }
+  .word.found {
+    background: #a5d6a7;
+    color: #1b5e20;
+    text-decoration: line-through;
+    font-weight: bold;
+    border: 2px solid #388e3c;
+  }
+  .congrats {
+    margin-top: 2rem;
+    font-size: 1.3rem;
+    color: var(--color-exact);
+    font-weight: bold;
+    text-align: center;
+  }
+  .next-btn {
+    margin: 1.2rem auto 0 auto;
+    padding: 0.7rem 2.2rem;
+    font-size: 1.2rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: #1976d2;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.2s;
+    display: block;
+  }
+  .next-btn:hover {
+    background: #0e61cb;
+  }
   @media (max-width: 500px) {
-    .content {
-      padding: 1.2rem 0.5rem 1rem 0.5rem;
+    .grid {
+      max-width: 98vw;
+      max-height: 98vw;
+      padding: 0.5rem;
+      gap: 0.2rem;
     }
-    .games-column {
-      gap: 0.7rem;
-    }
-    .game-button {
-      padding: 0.7rem;
-      font-size: 1.1rem;
-      min-width: 48px;
-      min-height: 48px;
-      max-width: 80px;
-      max-height: 80px;
-    }
-    .arrow {
-      font-size: 1.7rem;
-      margin: 0.3rem 0;
+    .cell {
+      width: 11vw;
+      height: 11vw;
+      font-size: 1.2rem;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
     }
   }
 </style> 
