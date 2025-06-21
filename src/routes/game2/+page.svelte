@@ -105,7 +105,7 @@
 
   .title {
     font-size: 1.5rem;
-    color: var(--color-text);
+    color: white;
     text-align: center;
     margin: 2rem 0;
   }
