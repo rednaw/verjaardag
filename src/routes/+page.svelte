@@ -77,79 +77,128 @@
   }
 
   function backtrack(grid, wordList, wordIdx = 0) {
-    if (wordIdx === wordList.length) return true;
+    if (wordIdx === wordList.length) {
+      return []; // Success, return empty array for placements
+    }
+
     const word = wordList[wordIdx];
     const positions = [];
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
         for (const [dx, dy] of directions) {
-          positions.push([x, y, dx, dy]);
+          positions.push({ x, y, dx, dy });
         }
       }
     }
     shuffle(positions);
-    for (const [x, y, dx, dy] of positions) {
-      if (canPlace(grid, word, x, y, dx, dy)) {
-        placeWord(grid, word, x, y, dx, dy);
-        if (backtrack(grid, wordList, wordIdx + 1)) return true;
-        removeWord(grid, word, x, y, dx, dy);
-      }
-    }
-    return false;
-  }
 
-  function verifyGrid(grid, words) {
-    // Helper to check if a word exists in the grid in any direction
-    function wordInGrid(word) {
-      const len = word.length;
-      for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < gridSize; x++) {
-          for (const [dx, dy] of directions) {
-            let found = true;
-            for (let i = 0; i < len; i++) {
-              const nx = x + dx * i;
-              const ny = y + dy * i;
-              if (
-                nx < 0 || nx >= gridSize ||
-                ny < 0 || ny >= gridSize ||
-                grid[ny][nx] !== word[i]
-              ) {
-                found = false;
-                break;
-              }
-            }
-            if (found) return true;
-            // Check reversed
-            found = true;
-            for (let i = 0; i < len; i++) {
-              const nx = x + dx * i;
-              const ny = y + dy * i;
-              if (
-                nx < 0 || nx >= gridSize ||
-                ny < 0 || ny >= gridSize ||
-                grid[ny][nx] !== word[len - 1 - i]
-              ) {
-                found = false;
-                break;
-              }
-            }
-            if (found) return true;
-          }
+    for (const { x, y, dx, dy } of positions) {
+      if (canPlace(grid, word, x, y, dx, dy)) {
+        // Memorize the state of the path before placing the new word.
+        const originalChars = [];
+        for (let i = 0; i < word.length; i++) {
+          originalChars.push(grid[y + dy * i][x + dx * i]);
+        }
+        
+        placeWord(grid, word, x, y, dx, dy);
+        const subsequentPlacements = backtrack(grid, wordList, wordIdx + 1);
+
+        if (subsequentPlacements !== null) {
+          // Found a valid solution down the line
+          return [{ word, dx, dy }, ...subsequentPlacements];
+        }
+
+        // Backtrack: Restore the path to its exact previous state.
+        for (let i = 0; i < word.length; i++) {
+          grid[y + dy * i][x + dx * i] = originalChars[i];
         }
       }
+    }
+
+    return null; // No placement found for this word
+  }
+
+  function checkDistribution(placements) {
+    if (!placements || placements.length < words.length) return false;
+
+    const counts = {
+      horizontal: 0,
+      vertical: 0,
+      diag_main: 0, // Top-left to bottom-right axis (\)
+      diag_anti: 0, // Top-right to bottom-left axis (/)
+      backward: 0
+    };
+    const uniqueVectors = new Set();
+
+    for (const p of placements) {
+      uniqueVectors.add(`${p.dx},${p.dy}`);
+      // p.dx and p.dy are either -1, 0, or 1
+      if (p.dy === 0) { // Horizontal
+        counts.horizontal++;
+        if (p.dx < 0) counts.backward++;
+      } else if (p.dx === 0) { // Vertical
+        counts.vertical++;
+        if (p.dy < 0) counts.backward++;
+      } else if (p.dx === p.dy) { // Main diagonal (\)
+        counts.diag_main++;
+        if (p.dx < 0) counts.backward++;
+      } else { // Anti-diagonal (/)
+        counts.diag_anti++;
+        if (p.dx < 0 || p.dy < 0) counts.backward++;
+      }
+    }
+
+    const numWords = placements.length;
+
+    // Rule 1: Must have at least one of each major orientation type.
+    if (counts.horizontal === 0 || counts.vertical === 0 || (counts.diag_main + counts.diag_anti) === 0) {
       return false;
     }
-    return words.every(word => wordInGrid(word));
+
+    // Rule 2: Must have at least one 'backward' word.
+    if (counts.backward === 0) {
+      return false;
+    }
+
+    // Rule 3: Avoid over-concentration. No orientation can have more than ceil(N/2) words.
+    const maxInType = Math.ceil(numWords / 2);
+    if (counts.horizontal > maxInType || counts.vertical > maxInType || (counts.diag_main + counts.diag_anti) > maxInType) {
+      return false;
+    }
+
+    // Rule 4: Must use a good number of unique direction vectors.
+    const minUniqueVectors = Math.floor(numWords / 2);
+    if (uniqueVectors.size < minUniqueVectors) {
+      return false;
+    }
+
+    return true; // All strict checks passed
   }
 
   function generateGrid() {
     let grid;
+    let placements;
     let tries = 0;
+    const maxTries = 200;
+
     do {
       grid = createEmptyGrid(gridSize);
-      backtrack(grid, words);
+      placements = backtrack(grid, words);
       tries++;
-    } while (!verifyGrid(grid, words) && tries < 100);
+    } while ((!placements || !checkDistribution(placements)) && tries < maxTries);
+
+    if (tries >= maxTries) {
+      console.warn(`Could not generate a well-distributed grid after ${maxTries} attempts. Using the last valid (but possibly unbalanced) grid.`);
+      // In the extremely unlikely case no solution is found at all, we must regenerate
+      // a basic grid to avoid shipping a broken puzzle.
+      if (!placements) {
+        console.error("CRITICAL: Failed to place all words with backtracking. Generating a failsafe grid.");
+        grid = createEmptyGrid(gridSize);
+        // This is a failsafe and might not be well-distributed.
+        backtrack(grid, words);
+      }
+    }
+
     // Fill empty cells with random letters
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
