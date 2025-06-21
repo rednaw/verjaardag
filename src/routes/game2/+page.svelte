@@ -49,7 +49,7 @@
 <div class="page-wrapper {transitionOut ? 'dramatic-out' : ''}">
   <main class:shake class:complete={gameComplete}>
     {#if !gameComplete}
-      <h1 class="title">Zet de woorden in de juiste volgorde</h1>
+      <h1 class="title">Zet nu de woorden in de juiste volgorde</h1>
     {/if}
     {#if gameComplete}
       <div class="congrats">
