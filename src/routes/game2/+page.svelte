@@ -1,8 +1,7 @@
 <script>
-  import { words as originalWords } from '../words.js';
+  import { words as correctOrder } from '../words.js';
   import { onMount } from 'svelte';
 
-  const correctOrder = ['LAGOS', 'PANAGA', 'ROLDE', 'PROBUS', 'OPA', 'BILJART'];
   let currentWords = [];
   let shake = false;
   let gameComplete = false;
@@ -11,7 +10,7 @@
   onMount(() => {
     // Start with a shuffled list, but not the correct one
     do {
-      currentWords = [...originalWords].sort(() => Math.random() - 0.5);
+      currentWords = [...correctOrder].sort(() => Math.random() - 0.5);
     } while (isCorrect(currentWords));
   });
 
