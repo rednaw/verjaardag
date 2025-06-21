@@ -82,10 +82,14 @@
     }
 
     const word = wordList[wordIdx];
+    const availableDirections = word.length >= 7
+        ? directions.filter(([dx, dy]) => !(dx === 1 && dy === 0))
+        : directions;
+
     const positions = [];
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
-        for (const [dx, dy] of directions) {
+        for (const [dx, dy] of availableDirections) {
           positions.push({ x, y, dx, dy });
         }
       }
@@ -211,8 +215,11 @@
   }
 
   let grid = [];
+  let displayedWords = [];
+
   onMount(() => {
     grid = generateGrid();
+    displayedWords = shuffle([...words]);
   });
 
   let selected = [];
@@ -305,7 +312,8 @@
         </div>
       {/key}
       <div class="word-list">
-        {#each words as word, i}
+        {#each displayedWords as word}
+          {@const i = words.indexOf(word)}
           <span class="word {foundWordsSet.has(word.toUpperCase()) ? 'found' : ''}">{foundWordsSet.has(word.toUpperCase()) ? word : maskedWords[i]}</span>
         {/each}
       </div>
@@ -335,11 +343,11 @@
     flex-direction: column;
     gap: 0.3rem;
     background: var(--color-white);
-    padding: 1.2rem 1.2rem 1.2rem 1.2rem;
+    padding: 0.8rem;
     border-radius: 1rem;
     box-shadow: 0 4px 32px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
-    margin-top: 4.2rem;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
     max-width: 100vw;
     max-height: 80vw;
     box-sizing: border-box;
@@ -378,7 +386,7 @@
     border-color: #1976d2;
   }
   .check-btn {
-    margin: 2.2rem 0 0.7rem 0;
+    margin: 1rem 0;
     padding: 0.7rem 2.2rem;
     font-size: 1.2rem;
     border-radius: 0.5rem;
