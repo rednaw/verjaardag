@@ -13,7 +13,7 @@
   // For debugging
   console.log('SvelteKit base path:', base);
 
-  const gridSize = 7;
+  const gridSize = 9;
 
   function maskWord(word) {
     if (word.length < 2) return word;
@@ -333,7 +333,7 @@
   .grid {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
     background: var(--color-white);
     padding: 1.2rem 1.2rem 1.2rem 1.2rem;
     border-radius: 1rem;
@@ -346,15 +346,15 @@
   }
   .row {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.3rem;
   }
   .cell {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.2rem;
+    height: 2.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     background: var(--color-background);
     border: 2px solid var(--color-border);
@@ -466,9 +466,9 @@
       gap: 0.2rem;
     }
     .cell {
-      width: 11vw;
-      height: 11vw;
-      font-size: 1.2rem;
+      width: 9vw;
+      height: 9vw;
+      font-size: 1rem;
       min-width: 0;
       min-height: 0;
       padding: 0;
