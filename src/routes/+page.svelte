@@ -230,7 +230,7 @@
 
   let foundWords = [];
   $: foundWordsSet = new Set(foundWords.map(w => w.toUpperCase()));
-  let foundCells = [];
+  let foundCoords = new Set(); // Use a Set for unique coordinates
   let shake = false;
   let transitionOut = false;
 
@@ -242,11 +242,18 @@
     const letters = selected.map(([y, x]) => grid[y][x]).join('');
     const reversed = letters.split('').reverse().join('');
     const matchIdx = words.findIndex(
-      w => !foundWords.includes(w) && (w === letters || w === reversed)
+      w => !foundWordsSet.has(w) && (w === letters || w === reversed)
     );
+
     if (matchIdx !== -1) {
+      // Word found
       foundWords = [...foundWords, words[matchIdx]];
-      foundCells = [...foundCells, ...selected];
+      
+      // Add the new coordinates to our Set
+      selected.forEach(([y, x]) => foundCoords.add(`${y}-${x}`));
+      foundCoords = foundCoords; // Trigger Svelte reactivity
+
+      // Check for game completion
       if (foundWords.length === words.length) {
         localStorage.setItem('game1Complete', 'true');
         setTimeout(() => {
@@ -257,6 +264,7 @@
         }, 500);
       }
     } else {
+      // Word not found
       shake = true;
       setTimeout(() => {
         shake = false;
@@ -264,24 +272,28 @@
       }, 400);
       return;
     }
-    selected = [];
+    
+    selected = []; // Clear selection on success
   }
+
   function isCellFound(y, x) {
-    return foundCells.some(([py, px]) => py === y && px === x);
+    return foundCoords.has(`${y}-${x}`);
   }
 </script>
 
 <div class="page-wrapper {transitionOut ? 'dramatic-out' : ''}">
   <main>
     {#if grid.length}
-      {#key foundCells.length}
+      {#key foundCoords.size}
         <div class="grid {shake ? 'shake' : ''}">
           {#each grid as row, y}
             <div class="row">
               {#each row as letter, x}
                 <button
                   type="button"
-                  class="cell {isSelected(y, x) ? 'selected' : ''} {isCellFound(y, x) ? 'found' : ''}"
+                  class="cell"
+                  class:selected={isSelected(y, x)}
+                  class:found={isCellFound(y, x) && !isSelected(y, x)}
                   aria-label={`Letter ${letter} at row ${y + 1}, column ${x + 1}`}
                   on:click={() => toggleCell(y, x)}
                 >

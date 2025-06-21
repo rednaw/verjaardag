@@ -48,8 +48,10 @@
 </script>
 
 <div class="page-wrapper {transitionOut ? 'dramatic-out' : ''}">
-  <main class:shake>
-    <h1 class="title">Zet de woorden in de juiste volgorde</h1>
+  <main class:shake class:complete={gameComplete}>
+    {#if !gameComplete}
+      <h1 class="title">Zet de woorden in de juiste volgorde</h1>
+    {/if}
     {#if gameComplete}
       <div class="congrats">
         <h2>Gewonnen!</h2>
@@ -210,6 +212,10 @@
     font-size: 1.2rem;
     color: #1b5e20;
     margin: 0;
+  }
+
+  main.complete {
+    justify-content: center;
   }
 
   .dramatic-out {
