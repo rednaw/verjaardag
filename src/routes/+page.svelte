@@ -246,11 +246,19 @@
       selected = [];
       return;
     }
+    
+    // Get the letters in the order they were selected
     const letters = selected.map(([y, x]) => grid[y][x]).join('');
-    const reversed = letters.split('').reverse().join('');
-    const matchIdx = words.findIndex(
-      w => !foundWordsSet.has(w) && (w === letters || w === reversed)
-    );
+    
+    // Check if the selected letters can form any word (in any order)
+    const matchIdx = words.findIndex(w => {
+      if (foundWordsSet.has(w)) return false;
+      
+      // Check if the letters can be rearranged to form this word
+      const selectedLetters = letters.split('').sort().join('');
+      const wordLetters = w.split('').sort().join('');
+      return selectedLetters === wordLetters;
+    });
 
     if (matchIdx !== -1) {
       // Word found
