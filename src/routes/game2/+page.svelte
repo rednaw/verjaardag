@@ -52,8 +52,8 @@
     <h1 class="title">Zet de woorden in de juiste volgorde</h1>
     {#if gameComplete}
       <div class="congrats">
-        <h2>Fantastisch!</h2>
-        <p>Je hebt de juiste volgorde gevonden.</p>
+        <h2>Gewonnen!</h2>
+        <p>Gefeliciteerd met je verjaardag!</p>
       </div>
     {:else if currentWords.length}
       <div class="word-list">
