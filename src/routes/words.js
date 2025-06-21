@@ -1,11 +1,12 @@
 export const words = [
   'PADVINDER',
   'LUITENANT',
+  'VADER',
   'LAGOS',
   'PANAGA',
   'YOKOHAMA',
   'ROLDE',
-  'PROBUS',
+  'PENSIOEN',
   'OPA',
   'BILJART',
 ]; 
